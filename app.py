@@ -264,45 +264,17 @@ st.markdown("""
     #MainMenu { visibility: hidden; }
     footer { visibility: hidden; }
     header { visibility: hidden; }
-
-    /* ── DESKTOP: hide collapse button, lock sidebar ── */
-    @media (min-width: 768px) {
-        [data-testid="collapsedControl"] {
-            display: none !important;
-        }
-        [data-testid="stSidebar"] {
-            min-width: 250px !important;
-            max-width: 250px !important;
-            transform: none !important;
-        }
+    [data-testid="collapsedControl"] {
+    display: none !important;
     }
-
-    /* ── MOBILE: show orange toggle tab on left edge ── */
-    @media (max-width: 767px) {
-        [data-testid="collapsedControl"] {
-            display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            background: #FF4500 !important;
-            border-radius: 0 8px 8px 0 !important;
-            width: 32px !important;
-            height: 48px !important;
-            align-items: center !important;
-            justify-content: center !important;
-            position: fixed !important;
-            left: 0 !important;
-            top: 45% !important;
-            z-index: 9999 !important;
-            box-shadow: 2px 0 8px rgba(255,69,0,0.5) !important;
-            border: none !important;
-            cursor: pointer !important;
-        }
-        [data-testid="collapsedControl"] svg {
-            fill: white !important;
-            color: white !important;
-            width: 16px !important;
-            height: 16px !important;
-        }
+    [data-testid="stSidebar"] {
+    min-width: 250px !important;
+    max-width: 250px !important;
+    transform: none !important;
+    left: 0 !important;
+    }
+    section[data-testid="stSidebarContent"] {
+    width: 250px !important;
     }
 
     .block-container {
@@ -311,8 +283,10 @@ st.markdown("""
         padding-right: 3rem !important;
         max-width: 1400px !important;
     }
+            
 </style>
 """, unsafe_allow_html=True)
+
 
 # ── SESSION STATE INIT ───────────────────────────────────
 if "user_email" not in st.session_state:
@@ -350,10 +324,12 @@ st.sidebar.markdown(
     unsafe_allow_html=True
 )
 
+
 # ── NAVIGATION STATE ─────────────────────────────────────
 if "page" not in st.session_state:
     st.session_state.page = "🏠 Home"
 
+# handle programmatic navigation
 if st.session_state.get("goto_profile"):
     st.session_state.page = "👤 Profile"
     st.session_state.goto_profile = False
@@ -362,7 +338,7 @@ if st.session_state.get("goto_home"):
     st.session_state.page = "🏠 Home"
     st.session_state.goto_home = False
 
-# sidebar navigation buttons
+# sidebar navigation — buttons not radio
 pages = ["🏠 Home", "👤 Profile", "🤖 AI Coach",
          "📊 Macros", "📈 Progress", "🔔 Reminders"]
 
@@ -407,6 +383,19 @@ if "profile" in st.session_state and st.session_state.profile:
         </div>
     </div>
     """, unsafe_allow_html=True)
+else:
+    st.sidebar.markdown("""
+    <div style='margin:16px;padding:16px;background:#1a1a1a;
+    border:1px solid #FF4500;border-radius:8px;text-align:center'>
+        <p style='color:#FF4500;font-weight:700;font-size:13px;
+        margin:0 0 4px;text-transform:uppercase;letter-spacing:1px'>
+            Get Started
+        </p>
+        <p style='color:#666;font-size:12px;margin:0;line-height:1.4'>
+            Scroll down to enter your email and start your fitness journey
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # logout
 st.sidebar.markdown("---")
@@ -418,6 +407,7 @@ if st.sidebar.button("🚪 Logout"):
 # ── LOGIN SCREEN ─────────────────────────────────────────
 if not st.session_state.user_email:
 
+    # ── HERO SECTION ─────────────────────────────────────
     st.markdown("""
     <div style='text-align:center;padding:60px 0 40px'>
         <div style='font-size:56px;margin-bottom:16px'>🔥</div>
@@ -425,13 +415,19 @@ if not st.session_state.user_email:
             YOUR AI FITNESS COACH
         </h1>
         <p style='font-size:18px;color:#666;max-width:500px;
-        margin:0 auto 40px;line-height:1.6'>
-            Personalized workout plans, macro tracking,
+        margin:0 auto 32px;line-height:1.6'>
+            Personalized workout plans, macro tracking, 
             and AI-powered coaching — all in one place.
         </p>
+        <a href='#get-started' style='background:#FF4500;color:white;
+        padding:14px 36px;border-radius:6px;font-weight:700;
+        font-size:15px;letter-spacing:1px;text-decoration:none;
+        text-transform:uppercase;display:inline-block'>
+            GET STARTED →
+        </a>
     </div>
     """, unsafe_allow_html=True)
-
+    # ── FEATURES ROW ─────────────────────────────────────
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.markdown("""
@@ -482,13 +478,17 @@ if not st.session_state.user_email:
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown("<div style='height:40px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:40px'></div>", 
+        unsafe_allow_html=True)
     st.markdown("---")
 
+    # ── LOGIN SECTION ─────────────────────────────────────
     st.markdown("""
-    <div style='text-align:center;padding:20px 0 10px'>
+    <div id='get-started' style='text-align:center;padding:20px 0 10px'>
+        <p style='color:#ffffff;font-size:22px;font-weight:700;
+        margin:0 0 8px'>Ready to start?</p>
         <p style='color:#666;font-size:15px;margin:0'>
-            Enter your email to get started
+            Enter your email to load your profile and get personalized AI coaching.
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -511,12 +511,16 @@ if not st.session_state.user_email:
 
                 if profile_data:
                     st.session_state.profile = profile_data
+
                 if workouts:
                     st.session_state.workout_log = workouts
+
                 if notes:
                     st.session_state.notes = notes
+
                 if reminder_settings:
-                    st.session_state.reminder_settings = reminder_settings
+                    st.session_state.reminder_settings = \
+                        reminder_settings
 
                 st.rerun()
             else:
@@ -525,7 +529,7 @@ if not st.session_state.user_email:
     st.markdown("""
     <div style='text-align:center;margin-top:16px'>
         <p style='color:#444;font-size:13px'>
-            New user? Just enter your email and
+            New user? Just enter your email and 
             set up your profile to get started.
         </p>
     </div>
