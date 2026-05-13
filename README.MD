@@ -25,6 +25,9 @@ A full-stack AI-powered fitness application built with Python, Groq LLM, AstraDB
 ### Progress Tracker
 ![Progress](screenshots/progress.png)
 
+### Reminders
+![Reminder](screenshots/reminder.png)
+
 ---
 
 ## 🧠 What Makes This Different
