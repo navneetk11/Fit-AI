@@ -265,6 +265,46 @@ st.markdown("""
     footer { visibility: hidden; }
     header { visibility: hidden; }
 
+    /* ── DESKTOP: hide collapse button, lock sidebar ── */
+    @media (min-width: 768px) {
+        [data-testid="collapsedControl"] {
+            display: none !important;
+        }
+        [data-testid="stSidebar"] {
+            min-width: 250px !important;
+            max-width: 250px !important;
+            transform: none !important;
+        }
+    }
+
+    /* ── MOBILE: show orange toggle tab on left edge ── */
+    @media (max-width: 767px) {
+        [data-testid="collapsedControl"] {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            background: #FF4500 !important;
+            border-radius: 0 8px 8px 0 !important;
+            width: 32px !important;
+            height: 48px !important;
+            align-items: center !important;
+            justify-content: center !important;
+            position: fixed !important;
+            left: 0 !important;
+            top: 45% !important;
+            z-index: 9999 !important;
+            box-shadow: 2px 0 8px rgba(255,69,0,0.5) !important;
+            border: none !important;
+            cursor: pointer !important;
+        }
+        [data-testid="collapsedControl"] svg {
+            fill: white !important;
+            color: white !important;
+            width: 16px !important;
+            height: 16px !important;
+        }
+    }
+
     .block-container {
         padding-top: 2rem !important;
         padding-left: 3rem !important;
@@ -310,12 +350,10 @@ st.sidebar.markdown(
     unsafe_allow_html=True
 )
 
-
 # ── NAVIGATION STATE ─────────────────────────────────────
 if "page" not in st.session_state:
     st.session_state.page = "🏠 Home"
 
-# handle programmatic navigation
 if st.session_state.get("goto_profile"):
     st.session_state.page = "👤 Profile"
     st.session_state.goto_profile = False
@@ -324,7 +362,7 @@ if st.session_state.get("goto_home"):
     st.session_state.page = "🏠 Home"
     st.session_state.goto_home = False
 
-# sidebar navigation — buttons not radio
+# sidebar navigation buttons
 pages = ["🏠 Home", "👤 Profile", "🤖 AI Coach",
          "📊 Macros", "📈 Progress", "🔔 Reminders"]
 
@@ -380,7 +418,6 @@ if st.sidebar.button("🚪 Logout"):
 # ── LOGIN SCREEN ─────────────────────────────────────────
 if not st.session_state.user_email:
 
-    # ── HERO SECTION ─────────────────────────────────────
     st.markdown("""
     <div style='text-align:center;padding:60px 0 40px'>
         <div style='font-size:56px;margin-bottom:16px'>🔥</div>
@@ -389,13 +426,12 @@ if not st.session_state.user_email:
         </h1>
         <p style='font-size:18px;color:#666;max-width:500px;
         margin:0 auto 40px;line-height:1.6'>
-            Personalized workout plans, macro tracking, 
+            Personalized workout plans, macro tracking,
             and AI-powered coaching — all in one place.
         </p>
     </div>
     """, unsafe_allow_html=True)
 
-    # ── FEATURES ROW ─────────────────────────────────────
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.markdown("""
@@ -446,15 +482,13 @@ if not st.session_state.user_email:
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown("<div style='height:40px'></div>", 
-        unsafe_allow_html=True)
+    st.markdown("<div style='height:40px'></div>", unsafe_allow_html=True)
     st.markdown("---")
 
-    # ── LOGIN SECTION ─────────────────────────────────────
     st.markdown("""
     <div style='text-align:center;padding:20px 0 10px'>
         <p style='color:#666;font-size:15px;margin:0'>
-            Enter your email to get started  
+            Enter your email to get started
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -477,16 +511,12 @@ if not st.session_state.user_email:
 
                 if profile_data:
                     st.session_state.profile = profile_data
-
                 if workouts:
                     st.session_state.workout_log = workouts
-
                 if notes:
                     st.session_state.notes = notes
-
                 if reminder_settings:
-                    st.session_state.reminder_settings = \
-                        reminder_settings
+                    st.session_state.reminder_settings = reminder_settings
 
                 st.rerun()
             else:
@@ -495,7 +525,7 @@ if not st.session_state.user_email:
     st.markdown("""
     <div style='text-align:center;margin-top:16px'>
         <p style='color:#444;font-size:13px'>
-            New user? Just enter your email and 
+            New user? Just enter your email and
             set up your profile to get started.
         </p>
     </div>
