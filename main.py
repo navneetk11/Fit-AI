@@ -1,65 +1,138 @@
-import requests
 import os
-import json
+import requests
 from dotenv import load_dotenv
 
 load_dotenv()
 
-BASE_URL = os.getenv("LANGFLOW_URL")
-ASK_AI_FLOW_ID = os.getenv("ASK_AI_FLOW_ID")
-MACRO_FLOW_ID = os.getenv("MACRO_FLOW_ID")
-API_KEY = os.getenv("LANGFLOW_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+MODEL = "llama-3.3-70b-versatile"
 
-HEADERS = {"x-api-key": API_KEY}
+HEADERS = {
+    "Authorization": f"Bearer {GROQ_API_KEY}",
+    "Content-Type": "application/json"
+}
 
-def run_flow(flow_id, input_value):
+
+def call_groq(system_prompt, user_message):
+    """Base function to call Groq API directly."""
     response = requests.post(
-        f"{BASE_URL}/api/v1/run/{flow_id}",
+        GROQ_URL,
+        headers=HEADERS,
         json={
-            "input_value": input_value,
-            "input_type": "text",
-            "output_type": "text"
-        },
-        headers=HEADERS
+            "model": MODEL,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message}
+            ],
+            "temperature": 0.7,
+            "max_tokens": 1024
+        }
     )
     data = response.json()
-    
-    # try main path first
-    try:
-        return data['outputs'][0]['outputs'][0]['results']['text']['data']['text']
-    except (KeyError, IndexError):
-        pass
-    
-    # try alternative path
-    try:
-        return data['outputs'][0]['outputs'][0]['messages'][0]['message']
-    except (KeyError, IndexError):
-        pass
-    
-    # if still failing print raw so we can see
-    import json
-    print("RAW RESPONSE:")
-    print(json.dumps(data, indent=2)[:500])  # first 500 chars only
-    return "Could not extract response"
+    return data['choices'][0]['message']['content']
+
 
 def ask_ai(question, profile, notes):
-    full_input = f"""
-    Question: {question}
-    User Profile: {profile}
-    Notes: {notes}
     """
-    return run_flow(ASK_AI_FLOW_ID, full_input)
+    Ask AI coach a fitness question.
+    Uses user profile and notes for personalized response.
+    Routes math questions to calculator logic.
+    """
+    # check if math question first
+    router_prompt = """You are a decision-making assistant.
+    If the user is asking to calculate a specific math 
+    expression with actual numbers like '2+2' or '150*4', 
+    respond with exactly 'MATH'.
+    For all fitness, nutrition, workout, or advice questions, 
+    respond with exactly 'ADVICE'.
+    Respond with ONE word only."""
+
+    route = call_groq(router_prompt, question).strip().upper()
+
+    if "MATH" in route:
+        # handle as math
+        math_prompt = """You are a calculator assistant. 
+        Evaluate the mathematical expression and return 
+        just the numerical answer."""
+        return call_groq(math_prompt, question)
+
+    else:
+        # handle as fitness advice
+        system_prompt = f"""You are an expert personal fitness 
+coach and nutritionist. You provide personalized, practical 
+advice based on the user's profile and recent activity.
+
+User Profile:
+{profile}
+
+Recent Notes:
+{notes}
+
+Guidelines:
+- Give specific, actionable advice
+- Reference the user's profile details in your response
+- Keep responses focused and practical
+- Use the notes to make responses contextual
+- Be encouraging and motivational"""
+
+        return call_groq(system_prompt, question)
+
 
 def get_macro(goals, profile):
-    full_input = f"""
-    Goals: {goals}
-    Profile: {profile}
     """
-    return run_flow(MACRO_FLOW_ID, full_input)
+    Calculate personalized macros based on goals and profile.
+    Returns JSON with protein, carbs, fat, calories.
+    """
+    system_prompt = """You are an expert sports nutritionist.
+Calculate personalized daily macro targets based on the 
+user's profile and goals.
 
-# # test
-# print("Testing Ask AI...")
-# print(ask_ai("what should I train today", "25yo, 75kg, intermediate", "did legs yesterday"))
+You MUST respond with ONLY a JSON object in this exact format,
+nothing else, no explanation, no markdown:
+{"protein": 150, "carbs": 200, "fat": 55, "calories": 1900}
 
-# print("\nTesting Macro Flow...")
-# print(get_macro("fat loss", "75kg, 175cm, male"))
+Calculate based on:
+- BMR using Mifflin-St Jeor formula
+- Activity multiplier from activity level
+- Goal adjustment (deficit for fat loss, surplus for muscle)
+- Protein: 1.6-2.2g per kg bodyweight
+- Fat: 20-35% of total calories
+- Carbs: remaining calories"""
+
+    user_message = f"""
+Goals and Preferences:
+{goals}
+
+User Profile:
+{profile}
+
+Calculate my daily macro targets and return ONLY the JSON.
+"""
+
+    result = call_groq(system_prompt, user_message)
+
+    # clean up response in case model adds extra text
+    import re
+    json_match = re.search(r'\{.*?\}', result, re.DOTALL)
+    if json_match:
+        return json_match.group()
+    return result
+
+
+# ── TEST ─────────────────────────────────────────────────
+if __name__ == "__main__":
+    print("Testing ask_ai...")
+    response = ask_ai(
+        question="What should I train today?",
+        profile="Age: 25, Weight: 70kg, Goal: Build Muscle, Experience: Intermediate",
+        notes="Did legs yesterday"
+    )
+    print("Ask AI:", response[:200])
+
+    print("\nTesting get_macro...")
+    macros = get_macro(
+        goals="Goal: Build Muscle, Activity: Moderately Active",
+        profile="Age: 25, Gender: Female, Weight: 70kg, Height: 165cm"
+    )
+    print("Macros:", macros)
